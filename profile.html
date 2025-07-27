@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-LapFa - Profile</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .form-select:not(:disabled) {
+            cursor: pointer;
+            background-color: white !important;
+        }
+
+        .form-input:not(:disabled) {
+            cursor: text;
+            background-color: white !important;
+        }
+    </style>
+</head>
+<body>
+<div id="notification" class="notification"></div>
+
+<header class="header">
+    <div class="logo">e-<span class="highlight">LapFa</span></div>
+    <div class="admin-indicator" id="adminIndicator" style="display: none;">
+        <span style="background: rgba(239, 68, 68, 0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+            👑 ADMIN
+        </span>
+    </div>
+    <div class="user-section">
+        <div class="user-info">
+            <span>👤</span>
+            <span id="currentUsername">Loading...</span>
+        </div>
+        <button class="logout-btn" onclick="handleLogout()">
+            <span>🚪</span>
+            Logout
+        </button>
+    </div>
+</header>
+
+<div class="main-container">
+    <nav class="sidebar">
+        <div class="menu-item" onclick="navigateTo('./beranda.html')">
+            <span class="menu-icon">🏠</span>
+            <span>Beranda</span>
+        </div>
+        <div class="menu-item" onclick="navigateTo('./pengaduan.html')">
+            <span class="menu-icon">📝</span>
+            <span>Pengaduan</span>
+        </div>
+        <div class="menu-item" onclick="navigateTo('./status.html')">
+            <span class="menu-icon">📊</span>
+            <span>Status</span>
+        </div>
+        <div class="menu-item" onclick="navigateTo('./data-pengaduan.html')">
+            <span class="menu-icon">👥</span>
+            <span>Data Pengguna</span>
+        </div>
+        <div class="menu-item active">
+            <span class="menu-icon">👤</span>
+            <span>Profile</span>
+        </div>
+        <div class="menu-item" onclick="navigateTo('./ubah-password.html')">
+            <span class="menu-icon">🔑</span>
+            <span>Ubah Password</span>
+        </div>
+        <div class="menu-item" onclick="navigateTo('./manage-users.html')" id="adminOnlyMenu" style="display: none;">
+            <span class="menu-icon">👥</span>
+            <span>Kelola User</span>
+        </div>
+    </nav>
+
+    <main class="content-area">
+        <div class="page-header">
+            <span class="icon">👤</span>
+            <h1>Profile</h1>
+        </div>
+
+        <div class="profile-container">
+            <div class="profile-picture-section">
+                <div class="profile-picture" id="profilePicture">
+                    <span class="placeholder-icon">👤</span>
+                </div>
+                <!-- Fixed file input - removed hidden class and made it properly functional -->
+                <input 
+                    type="file" 
+                    id="profileImageInput" 
+                    class="file-input" 
+                    accept="image/*" 
+                    onchange="handleImageUpload(event)"
+                    style="display: none;"
+                >
+                <button 
+                    class="upload-btn" 
+                    onclick="triggerFileUpload()"
+                    type="button"
+                >
+                    📷 Upload Foto
+                </button>
+            </div>
+
+            <div class="profile-form">
+                <div class="info-text">
+                    <span class="icon">ℹ️</span>
+                    <span>Informasi profile Anda. Data ini akan digunakan untuk identifikasi dalam sistem e-LapFa.</span>
+                </div>
+
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label class="form-label" for="nama">Nama Lengkap</label>
+                        <input
+                            type="text"
+                            id="nama"
+                            name="nama"
+                            class="form-input"
+                            placeholder="Masukkan nama lengkap"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="nim">NIM</label>
+                        <input
+                            type="text"
+                            id="nim"
+                            name="nim"
+                            class="form-input"
+                            disabled
+                            placeholder="Nomor Induk Mahasiswa"
+                            maxlength="15"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="fakultas">Fakultas</label>
+                        <select id="fakultas" name="fakultas" class="form-select" disabled>
+                            <option value="">Pilih Fakultas</option>
+                            <option value="FST">FST - Fakultas Sains dan Teknologi</option>
+                            <option value="FEB">FEB - Fakultas Ekonomi dan Bisnis</option>
+                            <option value="FKIP">FKIP - Fakultas Keguruan dan Ilmu Pendidikan</option>
+                            <option value="FH">FH - Fakultas Hukum</option>
+                            <option value="FK">FK - Fakultas Kedokteran</option>
+                            <option value="FP">FP - Fakultas Pertanian</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="jurusan">Jurusan</label>
+                        <select id="jurusan" name="jurusan" class="form-select" disabled>
+                            <option value="">Pilih Jurusan</option>
+                        </select>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="edit-btn" id="editBtn" onclick="toggleEdit()">
+                            ✏️ Edit Profile
+                        </button>
+                        <button type="button" class="save-btn" id="saveBtn" onclick="saveProfile()" style="display: none;">
+                            💾 Simpan
+                        </button>
+                        <button type="button" class="cancel-btn" id="cancelBtn" onclick="cancelEdit()" style="display: none;">
+                            ❌ Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+let isEditing = false;
+let originalData = {};
+
+// Jurusan data based on fakultas
+const jurusanData = {
+    'FST': [
+        { value: 'TI', text: 'TI - Teknik Informatika' },
+        { value: 'SI', text: 'SI - Sistem Informasi' },
+        { value: 'TK', text: 'TK - Teknik Kimia' },
+        { value: 'TM', text: 'TM - Teknik Mesin' },
+        { value: 'TE', text: 'TE - Teknik Elektro' }
+    ],
+    'FEB': [
+        { value: 'AK', text: 'AK - Akuntansi' },
+        { value: 'MJ', text: 'MJ - Manajemen' },
+        { value: 'EP', text: 'EP - Ekonomi Pembangunan' }
+    ],
+    'FKIP': [
+        { value: 'PGSD', text: 'PGSD - Pendidikan Guru Sekolah Dasar' },
+        { value: 'PBI', text: 'PBI - Pendidikan Bahasa Inggris' },
+        { value: 'PM', text: 'PM - Pendidikan Matematika' }
+    ],
+    'FH': [
+        { value: 'HK', text: 'HK - Ilmu Hukum' }
+    ],
+    'FK': [
+        { value: 'KD', text: 'KD - Kedokteran' },
+        { value: 'KG', text: 'KG - Kedokteran Gigi' }
+    ],
+    'FP': [
+        { value: 'AGR', text: 'AGR - Agroteknologi' },
+        { value: 'AGB', text: 'AGB - Agribisnis' }
+    ]
+};
+
+function showNotification(message, isError = false) {
+    const notification = document.getElementById('notification');
+    notification.textContent = message;
+    notification.className = `notification ${isError ? 'error' : ''} show`;
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
+
+// Fixed function to trigger file upload
+function triggerFileUpload() {
+    console.log('Upload button clicked'); // Debug log
+    const fileInput = document.getElementById('profileImageInput');
+    if (fileInput) {
+        fileInput.click();
+        console.log('File input triggered'); // Debug log
+    } else {
+        console.error('File input not found'); // Debug log
+        showNotification('Error: File input tidak ditemukan', true);
+    }
+}
+
+function checkAuth() {
+    const userData = localStorage.getItem('eLapFaUser');
+    if (!userData) {
+        // Create demo user for testing
+        const demoUser = {
+            username: 'demo',
+            fullName: 'Demo User',
+            role: 'user'
+        };
+        localStorage.setItem('eLapFaUser', JSON.stringify(demoUser));
+        showNotification('Demo user created for testing');
+        return demoUser;
+    }
+    try {
+        return JSON.parse(userData);
+    } catch (e) {
+        localStorage.removeItem('eLapFaUser');
+        showNotification('Data tidak valid, silakan login kembali', true);
+        setTimeout(() => {
+            window.location.href = './index.html';
+        }, 2000);
+        return null;
+    }
+}
+
+function initializePage() {
+    console.log('Initializing page...'); // Debug log
+    const user = checkAuth();
+    if (user) {
+        const displayName = user.fullName || user.username;
+        document.getElementById('currentUsername').textContent = displayName;
+        
+        // Tampilkan indikator admin
+        if (user.role === 'admin') {
+            document.getElementById('adminIndicator').style.display = 'block';
+            // Tampilkan menu admin
+            const adminMenu = document.getElementById('adminOnlyMenu');
+            if (adminMenu) {
+                adminMenu.style.display = 'flex';
+            }
+        }
+        
+        // Load user profile data
+        loadProfileData(user);
+        
+        // Load profile picture
+        loadProfilePicture();
+        
+        showNotification('Halaman profile siap digunakan');
+    }
+}
+
+function loadProfileData(user) {
+  // Get saved user data - setiap user punya data terpisah berdasarkan username
+  const userDataKey = `eLapFaUserData_${user.username}`;
+  const savedData = JSON.parse(localStorage.getItem(userDataKey) || '{}');
+  
+  let profileData;
+  
+  // Data khusus untuk user tertentu
+  if (user.username === 'farida') {
+    profileData = {
+      nama: savedData.namaPengaduan || 'Farida',
+      nim: savedData.nim || '24080960150',
+      fakultas: savedData.fakultas || 'FST',
+      jurusan: savedData.jurusan || 'TI'
+    };
+  } else if (user.username === 'nabhan') {
+    profileData = {
+      nama: savedData.namaPengaduan || 'Nabhan',
+      nim: savedData.nim || '24080960149',
+      fakultas: savedData.fakultas || 'FST',
+      jurusan: savedData.jurusan || 'TI'
+    };
+  } else {
+    // User lain mulai dengan data kosong
+    profileData = {
+      nama: savedData.namaPengaduan || user.fullName || user.username || '',
+      nim: savedData.nim || '',
+      fakultas: savedData.fakultas || '',
+      jurusan: savedData.jurusan || ''
+    };
+  }
+
+  // Fill form with data
+  document.getElementById('nama').value = profileData.nama;
+  document.getElementById('nim').value = profileData.nim;
+  document.getElementById('fakultas').value = profileData.fakultas;
+  
+  // Update jurusan options based on fakultas
+  updateJurusanOptions(profileData.fakultas);
+  document.getElementById('jurusan').value = profileData.jurusan;
+
+  // Store original data
+  originalData = { ...profileData };
+  
+  // Show notification based on profile completeness
+  if (!profileData.nim || !profileData.fakultas || !profileData.jurusan) {
+    showNotification('Profile belum lengkap. Klik "Edit Profile" untuk melengkapi data dan upload foto.', false);
+  }
+}
+
+function loadProfilePicture() {
+    const user = JSON.parse(localStorage.getItem('eLapFaUser'));
+    const profilePictureKey = `eLapFaProfilePicture_${user.username}`;
+    const savedImage = localStorage.getItem(profilePictureKey);
+    
+    if (savedImage) {
+        const profilePicture = document.getElementById('profilePicture');
+        profilePicture.innerHTML = `<img src="${savedImage}" alt="Profile Picture">`;
+    } else {
+        // Jika tidak ada foto, tampilkan placeholder
+        const profilePicture = document.getElementById('profilePicture');
+        profilePicture.innerHTML = `<span class="placeholder-icon">👤</span>`;
+    }
+}
+
+// Improved image upload handler
+function handleImageUpload(event) {
+    console.log('Image upload triggered');
+    const file = event.target.files[0];
+    
+    if (!file) {
+        console.log('No file selected');
+        return;
+    }
+    
+    console.log('File selected:', file.name, file.size, file.type);
+    
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+        showNotification('Ukuran file terlalu besar. Maksimal 2MB.', true);
+        return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showNotification('File harus berupa gambar.', true);
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        console.log('File read successfully');
+        const imageData = e.target.result;
+        
+        try {
+            // Save to localStorage dengan key khusus per user
+            const user = JSON.parse(localStorage.getItem('eLapFaUser'));
+            const profilePictureKey = `eLapFaProfilePicture_${user.username}`;
+            localStorage.setItem(profilePictureKey, imageData);
+            
+            // Update display
+            const profilePicture = document.getElementById('profilePicture');
+            profilePicture.innerHTML = `<img src="${imageData}" alt="Profile Picture">`;
+            
+            showNotification(`Foto profile ${user.username} berhasil diupload!`);
+        } catch (error) {
+            console.error('Error saving image:', error);
+            showNotification('Error menyimpan gambar', true);
+        }
+    };
+    
+    reader.onerror = function() {
+        console.error('Error reading file');
+        showNotification('Error membaca file', true);
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+function updateJurusanOptions(fakultas) {
+    const jurusanSelect = document.getElementById('jurusan');
+    jurusanSelect.innerHTML = '<option value="">Pilih Jurusan</option>';
+    
+    if (fakultas && jurusanData[fakultas]) {
+        jurusanData[fakultas].forEach(jurusan => {
+            const option = document.createElement('option');
+            option.value = jurusan.value;
+            option.textContent = jurusan.text;
+            jurusanSelect.appendChild(option);
+        });
+    }
+}
+
+function toggleEdit() {
+    console.log('Toggle edit clicked, current state:', isEditing);
+    isEditing = !isEditing;
+    
+    // Get ALL form inputs including NIM
+    const inputs = document.querySelectorAll('.form-input, .form-select');
+    const editBtn = document.getElementById('editBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    if (isEditing) {
+        // Enable ALL inputs for editing
+        inputs.forEach(input => {
+            input.disabled = false;
+            input.style.backgroundColor = 'white';
+            input.style.cursor = 'text';
+        });
+        
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'inline-block';
+        cancelBtn.style.display = 'inline-block';
+        
+        showNotification('Mode edit diaktifkan - Semua field bisa diubah');
+    } else {
+        // Disable all inputs
+        inputs.forEach(input => {
+            input.disabled = true;
+            input.style.backgroundColor = '#f8f9fa';
+            input.style.cursor = 'not-allowed';
+        });
+        
+        editBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+    }
+}
+
+function saveProfile() {
+  const user = JSON.parse(localStorage.getItem('eLapFaUser'));
+  const profileData = {
+    namaPengaduan: document.getElementById('nama').value.trim(),
+    nim: document.getElementById('nim').value.trim(),
+    fakultas: document.getElementById('fakultas').value,
+    jurusan: document.getElementById('jurusan').value
+  };
+
+  // Validation
+  if (!profileData.namaPengaduan || !profileData.nim || !profileData.fakultas || !profileData.jurusan) {
+    showNotification('Mohon lengkapi semua field', true);
+    return;
+  }
+
+  // NIM validation
+  if (profileData.nim.length < 10) {
+    showNotification('NIM harus minimal 10 digit', true);
+    return;
+  }
+
+  // Save to localStorage dengan key khusus per user
+  const userDataKey = `eLapFaUserData_${user.username}`;
+  localStorage.setItem(userDataKey, JSON.stringify(profileData));
+  
+  // Update original data
+  originalData = { ...profileData };
+  
+  // Exit edit mode
+  toggleEdit();
+  
+  showNotification(`Profile ${user.username} berhasil disimpan!`);
+}
+
+function cancelEdit() {
+    // Restore original data
+    document.getElementById('nama').value = originalData.nama;
+    document.getElementById('nim').value = originalData.nim;
+    document.getElementById('fakultas').value = originalData.fakultas;
+    
+    updateJurusanOptions(originalData.fakultas);
+    document.getElementById('jurusan').value = originalData.jurusan;
+    
+    // Exit edit mode
+    toggleEdit();
+    
+    showNotification('Perubahan dibatalkan');
+}
+
+function handleLogout() {
+    if (confirm('Apakah Anda yakin ingin logout?')) {
+        localStorage.removeItem('eLapFaUser');
+        showNotification('Logout berhasil!');
+        
+        setTimeout(() => {
+            window.location.href = './index.html';
+        }, 1500);
+    }
+}
+
+function navigateTo(url) {
+    showNotification(`Navigasi ke ${url}...`);
+    
+    // Aktifkan navigasi sebenarnya
+    setTimeout(() => {
+        window.location.href = url;
+    }, 1000); // Delay 1 detik untuk menampilkan notifikasi
+}
+
+// Initialize when page loads
+window.addEventListener('load', function() {
+    console.log('Page loaded, initializing...'); // Debug log
+    
+    // Initialize page
+    initializePage();
+    
+    // Event listener for fakultas change
+    const fakultasSelect = document.getElementById('fakultas');
+    if (fakultasSelect) {
+        fakultasSelect.addEventListener('change', function() {
+            const fakultas = this.value;
+            updateJurusanOptions(fakultas);
+            document.getElementById('jurusan').value = '';
+        });
+    }
+
+    // Menu interactions
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', function() {
+            if (!this.classList.contains('active')) {
+                const menuText = this.querySelector('span:last-child').textContent;
+                showNotification(`Navigasi ke ${menuText}...`);
+            }
+        });
+    });
+    
+    // Ensure buttons are clickable
+    const editBtn = document.getElementById('editBtn');
+    const uploadBtn = document.querySelector('.upload-btn');
+    
+    if (editBtn) {
+        editBtn.style.pointerEvents = 'auto';
+        editBtn.style.cursor = 'pointer';
+    }
+    
+    if (uploadBtn) {
+        uploadBtn.style.pointerEvents = 'auto';
+        uploadBtn.style.cursor = 'pointer';
+    }
+    
+    console.log('Page initialization complete'); // Debug log
+});
+</script>
+</body>
+</html>
+
+
+

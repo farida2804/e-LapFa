@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-LapFa - Kelola User</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="notification" class="notification"></div>
+
+    <header class="header">
+        <div class="logo">e-<span class="highlight">LapFa</span></div>
+        <div class="admin-indicator" id="adminIndicator" style="display: none;">
+            <span style="background: rgba(239, 68, 68, 0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                👑 ADMIN
+            </span>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <span>👤</span>
+                <span id="currentUsername">Loading...</span>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()">
+                <span>🚪</span>
+                Logout
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <nav class="sidebar">
+            <div class="menu-item" onclick="navigateTo('./beranda.html')">
+                <span class="menu-icon">🏠</span>
+                <span>Beranda</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('./pengaduan.html')">
+                <span class="menu-icon">📝</span>
+                <span>Pengaduan</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('./status.html')">
+                <span class="menu-icon">📊</span>
+                <span>Status</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('./data-pengaduan.html')">
+                <span class="menu-icon">👥</span>
+                <span>Data Penguna</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('./profile.html')">
+                <span class="menu-icon">👤</span>
+                <span>Profile</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('./ubah-password.html')">
+                <span class="menu-icon">🔑</span>
+                <span>Ubah Password</span>
+            </div>
+            <div class="menu-item active">
+                <span class="menu-icon">👥</span>
+                <span>Kelola User</span>
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <div class="page-header">
+                <span class="icon">👥</span>
+                <h1>Kelola User</h1>
+            </div>
+
+            <!-- Form Tambah User Baru -->
+            <div class="form-container" style="margin-bottom: 30px;">
+                <h2 style="color: #374151; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <span>➕</span> Tambah User Baru
+                </h2>
+                
+                <form id="addUserForm" onsubmit="handleAddUser(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label class="form-label" for="newUsername">
+                                Username <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="newUsername" 
+                                name="newUsername" 
+                                class="form-input" 
+                                placeholder="Username untuk login"
+                                required
+                                pattern="[a-zA-Z0-9_]+"
+                                title="Hanya huruf, angka, dan underscore"
+                            >
+                            <div class="error-message" id="usernameError"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="newPassword">
+                                Password <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="password" 
+                                id="newPassword" 
+                                name="newPassword" 
+                                class="form-input" 
+                                placeholder="Password minimal 6 karakter"
+                                required
+                                minlength="6"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="newFullName">
+                                Nama Lengkap <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="newFullName" 
+                                name="newFullName" 
+                                class="form-input" 
+                                placeholder="Nama lengkap user"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="newRole">
+                                Role <span class="required">*</span>
+                            </label>
+                            <select id="newRole" name="newRole" class="form-select" required>
+                                <option value="">Pilih Role</option>
+                                <option value="user">User (Mahasiswa/Staff)</option>
+                                <option value="admin">Admin (Dosen/Admin)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="addUserBtn">
+                        ➕ Tambah User
+                    </button>
+                </form>
+            </div>
+
+            <!-- Daftar User -->
+            <div class="table-container">
+                <div class="search-filter">
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        id="searchInput"
+                        placeholder="Cari username atau nama..."
+                        onkeyup="filterUsers()"
+                    >
+                    <select class="filter-select" id="roleFilter" onchange="filterUsers()">
+                        <option value="">Semua Role</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
+                    <button class="upload-btn" onclick="exportUsers()" style="margin-left: 10px;">
+                        📥 Export Data
+                    </button>
+                </div>
+
+                <div id="tableWrapper">
+                    <table class="status-table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Nama Lengkap</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Data akan diisi oleh JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="pagination">
+                    <!-- Pagination akan diisi oleh JavaScript -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Edit User -->
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+            <h3 style="color: #374151; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                <span>✏️</span> Edit User
+            </h3>
+            
+            <form id="editUserForm" onsubmit="handleEditUser(event)">
+                <input type="hidden" id="editUsername" name="editUsername">
+                
+                <div class="form-group">
+                    <label class="form-label" for="editFullName">Nama Lengkap</label>
+                    <input type="text" id="editFullName" name="editFullName" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="editRole">Role</label>
+                    <select id="editRole" name="editRole" class="form-select" required>
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="editNewPassword">Password Baru (Kosongkan jika tidak diubah)</label>
+                    <input type="password" id="editNewPassword" name="editNewPassword" class="form-input" placeholder="Password baru (opsional)" minlength="6">
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn" onclick="closeEditModal()">Batal</button>
+                    <button type="submit" class="submit-btn">💾 Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let allUsers = [];
+        let filteredUsers = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${isError ? 'error' : ''} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function checkAuth() {
+            const userData = localStorage.getItem('eLapFaUser');
+            if (!userData) {
+                showNotification('Sesi tidak ditemukan, silakan login kembali', true);
+                setTimeout(() => {
+                    window.location.href = './index.html';
+                }, 2000);
+                return null;
+            }
+
+            try {
+                const user = JSON.parse(userData);
+                if (user.role !== 'admin') {
+                    showNotification('Akses ditolak! Hanya admin yang dapat mengakses halaman ini.', true);
+                    setTimeout(() => {
+                        window.location.href = './beranda.html';
+                    }, 2000);
+                    return null;
+                }
+                return user;
+            } catch (e) {
+                localStorage.removeItem('eLapFaUser');
+                showNotification('Data tidak valid, silakan login kembali', true);
+                setTimeout(() => {
+                    window.location.href = './index.html';
+                }, 2000);
+                return null;
+            }
+        }
+
+        function initializePage() {
+            const user = checkAuth();
+            if (user) {
+                const displayName = user.fullName || user.username;
+                document.getElementById('currentUsername').textContent = displayName;
+                document.getElementById('adminIndicator').style.display = 'block';
+                
+                loadUsers();
+                renderUsersTable();
+                
+                showNotification('Halaman kelola user siap digunakan');
+            }
+        }
+
+        function loadUsers() {
+            // Load users from localStorage or use default
+            const savedUsers = localStorage.getItem('eLapFaUsers');
+            
+            if (savedUsers) {
+                allUsers = JSON.parse(savedUsers);
+            } else {
+                // Default users
+                allUsers = [
+                    { username: 'admin', password: 'admin123', fullName: 'Administrator', role: 'admin', status: 'Aktif' },
+                    { username: 'user', password: 'user123', fullName: 'User Demo', role: 'user', status: 'Aktif' },
+                    { username: 'nabhan', password: 'nabhan123', fullName: 'Nabhan', role: 'user', status: 'Aktif' }
+                ];
+                saveUsers();
+            }
+            
+            filteredUsers = [...allUsers];
+        }
+
+        function saveUsers() {
+            localStorage.setItem('eLapFaUsers', JSON.stringify(allUsers));
+            
+            // Update login accounts format
+            const loginAccounts = {};
+            allUsers.forEach(user => {
+                loginAccounts[user.username] = {
+                    username: user.username,
+                    password: user.password,
+                    fullName: user.fullName,
+                    role: user.role
+                };
+            });
+            localStorage.setItem('eLapFaDemoAccounts', JSON.stringify(loginAccounts));
+        }
+
+        function handleAddUser(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const newUser = {
+                username: formData.get('newUsername').trim().toLowerCase(),
+                password: formData.get('newPassword'),
+                fullName: formData.get('newFullName').trim(),
+                role: formData.get('newRole'),
+                status: 'Aktif'
+            };
+
+            // Validation
+            if (!newUser.username || !newUser.password || !newUser.fullName || !newUser.role) {
+                showNotification('Mohon lengkapi semua field!', true);
+                return;
+            }
+
+            // Check if username already exists
+            if (allUsers.find(user => user.username === newUser.username)) {
+                document.getElementById('usernameError').style.display = 'block';
+                document.getElementById('usernameError').textContent = 'Username sudah digunakan!';
+                showNotification('Username sudah digunakan!', true);
+                return;
+            }
+
+            // Add user
+            allUsers.push(newUser);
+            saveUsers();
+            
+            // Reset form
+            event.target.reset();
+            document.getElementById('usernameError').style.display = 'none';
+            
+            // Refresh table
+            filteredUsers = [...allUsers];
+            renderUsersTable();
+            
+            showNotification(`User ${newUser.username} berhasil ditambahkan!`);
+        }
+
+        function renderUsersTable() {
+            const tableBody = document.getElementById('usersTableBody');
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = filteredUsers.slice(startIndex, endIndex);
+
+            if (pageData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <div class="icon">👥</div>
+                                <div>Tidak ada user yang ditemukan</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tableBody.innerHTML = pageData.map(user => `
+                    <tr>
+                        <td><strong>${user.username}</strong></td>
+                        <td>${user.fullName}</td>
+                        <td>
+                            <span class="status-badge ${user.role === 'admin' ? 'status-completed' : 'status-progress'}">
+                                ${user.role === 'admin' ? '👑 Admin' : '👤 User'}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-completed">${user.status}</span>
+                        </td>
+                        <td>
+                            <button class="upload-btn" onclick="editUser('${user.username}')" style="margin-right: 5px; padding: 5px 10px; font-size: 12px;">
+                                ✏️ Edit
+                            </button>
+                            ${user.username !== 'admin' ? `
+                                <button class="cancel-btn" onclick="deleteUser('${user.username}')" style="padding: 5px 10px; font-size: 12px; background: #ef4444;">
+                                    🗑️ Hapus
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            // Previous button
+            paginationHTML += `
+                <button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">
+                    ‹
+                </button>
+            `;
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    paginationHTML += `
+                        <button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">
+                            ${i}
+                        </button>
+                    `;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    paginationHTML += `<span class="pagination-btn" disabled>...</span>`;
+                }
+            }
+
+            // Next button
+            paginationHTML += `
+                <button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">
+                    ›
+                </button>
+            `;
+
+            pagination.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                renderUsersTable();
+            }
+        }
+
+        function filterUsers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+
+            filteredUsers = allUsers.filter(user => {
+                const matchesSearch = 
+                    user.username.toLowerCase().includes(searchTerm) ||
+                    user.fullName.toLowerCase().includes(searchTerm);
+
+                const matchesRole = !roleFilter || user.role === roleFilter;
+
+                return matchesSearch && matchesRole;
+            });
+
+            currentPage = 1;
+            renderUsersTable();
+        }
+
+        function editUser(username) {
+            const user = allUsers.find(u => u.username === username);
+            if (user) {
+                document.getElementById('editUsername').value = user.username;
+                document.getElementById('editFullName').value = user.fullName;
+                document.getElementById('editRole').value = user.role;
+                document.getElementById('editNewPassword').value = '';
+                
+                document.getElementById('editModal').style.display = 'flex';
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function handleEditUser(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const username = formData.get('editUsername');
+            const fullName = formData.get('editFullName').trim();
+            const role = formData.get('editRole');
+            const newPassword = formData.get('editNewPassword');
+
+            const userIndex = allUsers.findIndex(u => u.username === username);
+            if (userIndex !== -1) {
+                allUsers[userIndex].fullName = fullName;
+                allUsers[userIndex].role = role;
+                
+                if (newPassword && newPassword.length >= 6) {
+                    allUsers[userIndex].password = newPassword;
+                }
+
+                saveUsers();
+                filteredUsers = [...allUsers];
+                renderUsersTable();
+                closeEditModal();
+                
+                showNotification(`User ${username} berhasil diupdate!`);
+            }
+        }
+
+        function deleteUser(username) {
+            if (username === 'admin') {
+                showNotification('Admin utama tidak dapat dihapus!', true);
+                return;
+            }
+
+            if (confirm(`Apakah Anda yakin ingin menghapus user "${username}"?`)) {
+                allUsers = allUsers.filter(u => u.username !== username);
+                saveUsers();
+                filteredUsers = [...allUsers];
+                renderUsersTable();
+                
+                showNotification(`User ${username} berhasil dihapus!`);
+            }
+        }
+
+        function exportUsers() {
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "Username,Nama Lengkap,Role,Status\n"
+                + allUsers.map(user => 
+                    `${user.username},${user.fullName},${user.role},${user.status}`
+                ).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "users_data.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Data user berhasil diexport!');
+        }
+
+        function handleLogout() {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                localStorage.removeItem('eLapFaUser');
+                showNotification('Logout berhasil!');
+                
+                setTimeout(() => {
+                    window.location.href = './index.html';
+                }, 1500);
+            }
+        }
+
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+
+        // Menu interactions
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                if (!this.classList.contains('active')) {
+                    const menuText = this.querySelector('span:last-child').textContent;
+                    showNotification(`Navigasi ke ${menuText}...`);
+                }
+            });
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+
+        window.addEventListener('load', initializePage);
+    </script>
+</body>
+</html>

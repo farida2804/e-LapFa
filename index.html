@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-LapFa - Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-icons">
+        <div class="icon">🏢</div>
+        <div class="icon">📝</div>
+        <div class="icon">🔧</div>
+        <div class="icon">💡</div>
+        <div class="icon">📊</div>
+        <div class="icon">⚙️</div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <div class="login-container" style="margin-top: 100px;position: relative;">
+        <div class="logo-section">
+            <div class="logo">e-<span class="highlight">LapFa</span></div>
+            <div class="subtitle">Sistem Pelaporan Fasilitas</div>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">👤</span>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        class="form-input" 
+                        placeholder="Masukkan username"
+                        required
+                        autocomplete="username"
+                    >
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-input" 
+                        placeholder="Masukkan password"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                <span class="loading"></span>
+                <span class="btn-text">Masuk</span>
+            </button>
+        </form>
+
+        <div class="forgot-password">
+            <a href="#" onclick="showNotification('Fitur lupa password akan segera tersedia', true)">Lupa Password?</a>
+        </div>
+    </div>
+
+    <script>
+        // Update bagian script untuk menggunakan data user dari localStorage
+        // Ganti bagian demoAccounts dengan:
+
+        // Demo accounts data - akan diupdate dari localStorage jika ada
+        let demoAccounts = {
+            'admin': {
+                username: 'admin',
+                password: 'admin123',
+                fullName: 'Administrator',
+                role: 'admin'
+            },
+            'user': {
+                username: 'user',
+                password: 'user123',
+                fullName: 'User Demo',
+                role: 'user'
+            },
+            'nabhan': {
+                username: 'nabhan',
+                password: 'nabhan123',
+                fullName: 'Nabhan',
+                role: 'user'
+            }
+        };
+
+        // Load updated accounts from localStorage if available
+        function loadDemoAccounts() {
+            const savedAccounts = localStorage.getItem('eLapFaDemoAccounts');
+            if (savedAccounts) {
+                try {
+                    demoAccounts = JSON.parse(savedAccounts);
+                } catch (e) {
+                    console.log('Error loading saved accounts, using defaults');
+                }
+            }
+        }
+
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${isError ? 'error' : ''} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Call loadDemoAccounts at the beginning of handleLogin function
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            // Load latest user data
+            loadDemoAccounts();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            if (!username || !password) {
+                showNotification('Mohon lengkapi username dan password', true);
+                return;
+            }
+
+            // Show loading state
+            loginBtn.classList.add('loading');
+            loginBtn.disabled = true;
+            loginBtn.querySelector('.btn-text').textContent = 'Memproses...';
+
+            // Simulate login process
+            setTimeout(() => {
+                // Check demo accounts
+                if (demoAccounts[username] && demoAccounts[username].password === password) {
+                    const userData = demoAccounts[username];
+                    
+                    // Save user data to localStorage
+                    localStorage.setItem('eLapFaUser', JSON.stringify(userData));
+                    
+                    showNotification(`Selamat datang, ${userData.fullName}!`);
+                    
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = './beranda.html';
+                    }, 1500);
+                } else {
+                    showNotification('Username atau password salah!', true);
+                    
+                    // Reset button
+                    loginBtn.classList.remove('loading');
+                    loginBtn.disabled = false;
+                    loginBtn.querySelector('.btn-text').textContent = 'Masuk';
+                }
+            }, 2000);
+        }
+
+        // Check if user is already logged in
+        function checkExistingSession() {
+            const userData = localStorage.getItem('eLapFaUser');
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    showNotification(`Anda sudah login sebagai ${user.fullName}`);
+                    setTimeout(() => {
+                        window.location.href = './beranda.html';
+                    }, 2000);
+                } catch (e) {
+                    localStorage.removeItem('eLapFaUser');
+                }
+            }
+        }
+
+        // Also call it when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDemoAccounts();
+            document.getElementById('username').focus();
+            checkExistingSession();
+        });
+
+        // Enter key handling
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                const loginBtn = document.getElementById('loginBtn');
+                if (!loginBtn.disabled) {
+                    loginBtn.click();
+                }
+            }
+        });
+
+        // Add floating animation to background icons
+        document.querySelectorAll('.icon').forEach((icon, index) => {
+            icon.style.animationDelay = `${index * 0.5}s`;
+        });
+    </script>
+</body>
+</html>

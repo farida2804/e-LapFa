@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-LapFa - Status Pengaduan</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .status-no-data {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .clickable-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .clickable-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .create-pengaduan-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 1rem;
+            transition: transform 0.2s ease;
+        }
+
+        .create-pengaduan-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+<div id="notification" class="notification"></div>
+
+<header class="header">
+    <div class="logo">e-<span class="highlight">LapFa</span></div>
+    <div class="admin-indicator" id="adminIndicator" style="display: none;">
+        <span style="background: rgba(239, 68, 68, 0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+            👑 ADMIN
+        </span>
+    </div>
+    <div class="user-section">
+        <div class="user-info">
+            <span>👤</span>
+            <span id="currentUsername">Loading...</span>
+        </div>
+        <button class="logout-btn" onclick="handleLogout()">
+            <span>🚪</span>
+            Logout
+        </button>
+    </div>
+</header>
+
+<div class="main-container">
+    <nav class="sidebar">
+        <div class="menu-item" onclick="navigateTo('./beranda.html')">
+            <span class="menu-icon">🏠</span>
+            <span>Beranda</span>
+        </div>
+        <div class="menu-item" onclick="navigateTo('./pengaduan.html')">
+            <span class="menu-icon">📝</span>
+            <span>Pengaduan</span>
+        </div>
+        <div class="menu-item active">
+            <span class="menu-icon">📊</span>
+            <span>Status</span>
+        </div>
+        <div class="menu-item" onclick="navigateTo('./data-pengaduan.html')">
+            <span class="menu-icon">👥</span>
+            <span>Data Pengguna</span>
+        </div>
+        <div class="menu-item" onclick="navigateTo('./profile.html')">
+            <span class="menu-icon">👤</span>
+            <span>Profile</span>
+        </div>
+        <div class="menu-item" onclick="navigateTo('./ubah-password.html')">
+            <span class="menu-icon">🔑</span>
+            <span>Ubah Password</span>
+        </div>
+        <div class="menu-item" onclick="navigateTo('./manage-users.html')" id="adminOnlyMenu" style="display: none;">
+            <span class="menu-icon">👥</span>
+            <span>Kelola User</span>
+        </div>
+    </nav>
+
+    <main class="content-area">
+        <div class="page-header">
+            <span class="icon">📊</span>
+            <h1 id="pageTitle">Status Pengaduan</h1>
+        </div>
+
+        <div class="filter-section">
+            <input type="text" class="filter-input" id="searchInput" placeholder="Cari..." oninput="filterTable()">
+            <select class="filter-select" id="statusFilter" onchange="filterTable()">
+                <option value="">Semua Status</option>
+                <option value="Menunggu Review">Menunggu Review</option>
+                <option value="Diproses">Diproses</option>
+                <option value="Selesai">Selesai</option>
+            </select>
+        </div>
+
+        <table class="status-table">
+            <thead>
+            <tr>
+                <th>Nama</th>
+                <th>NIM</th>
+                <th>Pengaduan</th>
+                <th>Tanggal</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody id="tableBody">
+            <!-- Data will be loaded here -->
+            </tbody>
+        </table>
+
+        <div class="pagination" id="pagination">
+            <!-- Pagination buttons will be rendered here -->
+        </div>
+    </main>
+</div>
+
+<script>
+    // Data akan diambil dari localStorage yang sudah ada
+    let filteredData = [];
+    let currentPage = 1;
+    const itemsPerPage = 7;
+    let currentUser = null;
+
+    function showNotification(message, isError = false) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification ${isError ? 'error' : ''} show`;
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    function checkAuth() {
+        const userData = localStorage.getItem('eLapFaUser');
+        if (!userData) {
+            // Create demo user for testing
+            const demoUser = {
+                username: 'demo',
+                fullName: 'Demo User',
+                role: 'user'
+            };
+            localStorage.setItem('eLapFaUser', JSON.stringify(demoUser));
+            showNotification('Demo user created for testing');
+            return demoUser;
+        }
+        try {
+            return JSON.parse(userData);
+        } catch (e) {
+            localStorage.removeItem('eLapFaUser');
+            showNotification('Data tidak valid, silakan login kembali', true);
+            setTimeout(() => {
+                window.location.href = './index.html';
+            }, 2000);
+            return null;
+        }
+    }
+
+    function initializePage() {
+        currentUser = checkAuth();
+        if (currentUser) {
+            const displayName = currentUser.fullName || currentUser.username;
+            document.getElementById('currentUsername').textContent = displayName;
+            
+            if (currentUser.role === 'admin') {
+                document.getElementById('adminIndicator').style.display = 'block';
+                // Tampilkan menu admin
+                const adminMenu = document.getElementById('adminOnlyMenu');
+                if (adminMenu) {
+                    adminMenu.style.display = 'flex';
+                }
+            }
+            
+            // Load data berdasarkan role
+            loadStatusData(currentUser);
+            renderTable();
+            
+            // Tampilkan notifikasi berbeda berdasarkan role
+            if (currentUser.role === 'admin') {
+                showNotification('Admin Panel - Menampilkan semua pengaduan');
+            } else {
+                showNotification('Halaman status siap digunakan');
+            }
+        }
+    }
+
+    function loadStatusData(currentUser) {
+        const statusData = [];
+        
+        if (currentUser.role === 'admin') {
+            // ADMIN: Tampilkan SEMUA pengaduan dari semua user
+            const allPengaduan = JSON.parse(localStorage.getItem('eLapFaAllPengaduan') || '[]');
+            
+            // Jika belum ada data, buat sample data
+            if (allPengaduan.length === 0) {
+                const sampleData = [
+                    {
+                        id: 'PGD-' + Date.now(),
+                        nama: 'Nabhan',
+                        jenisPengaduan: 'Pengaduan Fasilitas',
+                        deskripsi: 'Kursi di ruang kelas rusak',
+                        tanggal: new Date('2025-01-22').toISOString(),
+                        status: 'Selesai',
+                        user: { username: 'nabhan', nama: 'Nabhan', nim: '24080960149', fakultas: 'FST', jurusan: 'TI' }
+                    },
+                    {
+                        id: 'PGD-' + (Date.now() + 1),
+                        nama: 'Farida',
+                        jenisPengaduan: 'Pengaduan Infrastruktur',
+                        deskripsi: 'Lampu di koridor mati',
+                        tanggal: new Date('2025-01-20').toISOString(),
+                        status: 'Diproses',
+                        user: { username: 'farida', nama: 'Farida', nim: '24080960150', fakultas: 'FST', jurusan: 'TI' }
+                    }
+                ];
+                
+                // Simpan sample data
+                localStorage.setItem('eLapFaAllPengaduan', JSON.stringify(sampleData));
+                allPengaduan.push(...sampleData);
+            }
+            
+            // Convert ke format tabel
+            allPengaduan.forEach(pengaduan => {
+                statusData.push({
+                    nama: pengaduan.user?.nama || pengaduan.nama,
+                    nim: pengaduan.user?.nim || 'Belum diisi',
+                    pengaduan: pengaduan.jenisPengaduan || 'Pengaduan',
+                    tanggal: new Date(pengaduan.tanggal).toLocaleDateString('id-ID'),
+                    status: pengaduan.status,
+                    id: pengaduan.id
+                });
+            });
+            
+        } else {
+            // USER: Hanya tampilkan pengaduan mereka sendiri
+            const userPengaduan = JSON.parse(localStorage.getItem(`eLapFaPengaduan_${currentUser.username}`) || '[]');
+            const userData = JSON.parse(localStorage.getItem(`eLapFaUserData_${currentUser.username}`) || '{}');
+            
+            if (userPengaduan.length === 0) {
+                // Jika belum ada pengaduan
+                statusData.push({
+                    nama: currentUser.fullName || currentUser.username,
+                    nim: userData.nim || 'Belum diisi',
+                    pengaduan: 'Belum ada pengaduan',
+                    tanggal: new Date().toLocaleDateString('id-ID'),
+                    status: 'Tidak ada data',
+                    id: '-'
+                });
+            } else {
+                // Convert pengaduan user ke format tabel
+                userPengaduan.forEach(pengaduan => {
+                    statusData.push({
+                        nama: pengaduan.user?.nama || pengaduan.nama,
+                        nim: pengaduan.user?.nim || userData.nim || 'Belum diisi',
+                        pengaduan: pengaduan.jenisPengaduan || 'Pengaduan',
+                        tanggal: new Date(pengaduan.tanggal).toLocaleDateString('id-ID'),
+                        status: pengaduan.status,
+                        id: pengaduan.id
+                    });
+                });
+            }
+        }
+        
+        filteredData = [...statusData];
+    }
+
+    function handleLogout() {
+        if (confirm('Apakah Anda yakin ingin logout?')) {
+            localStorage.removeItem('eLapFaUser');
+            showNotification('Logout berhasil!');
+            
+            setTimeout(() => {
+                window.location.href = './index.html';
+            }, 1500);
+        }
+    }
+
+    function navigateTo(url) {
+        showNotification(`Navigasi ke ${url}...`);
+        
+        setTimeout(() => {
+            window.location.href = url;
+        }, 1000);
+    }
+
+    function getStatusBadge(status) {
+        let className = 'status-badge ';
+        switch(status) {
+            case 'Selesai':
+            case 'Sudah diperbaiki':
+                className += 'status-completed';
+                break;
+            case 'Diproses':
+            case 'Sedang diperbaiki':
+                className += 'status-progress';
+                break;
+            case 'Menunggu Review':
+            case 'Perbaikan belum dimulai':
+                className += 'status-pending';
+                break;
+            case 'Tidak ada data':
+                className += 'status-no-data';
+                break;
+            default:
+                className += 'status-pending';
+        }
+        return `<span class="${className}">${status}</span>`;
+    }
+
+    function renderTable() {
+        const tableBody = document.getElementById('tableBody');
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const pageData = filteredData.slice(startIndex, endIndex);
+        
+        if (pageData.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <div class="icon">📋</div>
+                            <div>Tidak ada data yang ditemukan</div>
+                            ${currentUser.role !== 'admin' ? '<button class="create-pengaduan-btn" onclick="navigateTo(\'./pengaduan.html\')">Buat Pengaduan Baru</button>' : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        } else {
+            tableBody.innerHTML = pageData.map(item => `
+                <tr ${item.id !== '-' ? `onclick="viewDetail('${item.id}')"` : ''} class="${item.id !== '-' ? 'clickable-row' : ''}">
+                    <td>${item.nama}</td>
+                    <td>${item.nim}</td>
+                    <td>${item.pengaduan}</td>
+                    <td>${item.tanggal}</td>
+                    <td>${getStatusBadge(item.status)}</td>
+                </tr>
+            `).join('');
+        }
+        
+        renderPagination();
+    }
+
+    function viewDetail(id) {
+        if (currentUser.role === 'admin') {
+            // Admin bisa edit status
+            const allPengaduan = JSON.parse(localStorage.getItem('eLapFaAllPengaduan') || '[]');
+            const pengaduan = allPengaduan.find(p => p.id === id);
+            
+            if (pengaduan) {
+                const newStatus = prompt(`Ubah status pengaduan "${pengaduan.id}":\n\n1. Menunggu Review\n2. Diproses\n3. Selesai\n\nStatus saat ini: ${pengaduan.status}\nMasukkan status baru:`, pengaduan.status);
+                
+                if (newStatus && ['Menunggu Review', 'Diproses', 'Selesai'].includes(newStatus)) {
+                    // Update status di allPengaduan
+                    const pengaduanIndex = allPengaduan.findIndex(p => p.id === id);
+                    allPengaduan[pengaduanIndex].status = newStatus;
+                    localStorage.setItem('eLapFaAllPengaduan', JSON.stringify(allPengaduan));
+                    
+                    // Update status di pengaduan user
+                    const userPengaduan = JSON.parse(localStorage.getItem(`eLapFaPengaduan_${pengaduan.user.username}`) || '[]');
+                    const userPengaduanIndex = userPengaduan.findIndex(p => p.id === id);
+                    if (userPengaduanIndex !== -1) {
+                        userPengaduan[userPengaduanIndex].status = newStatus;
+                        localStorage.setItem(`eLapFaPengaduan_${pengaduan.user.username}`, JSON.stringify(userPengaduan));
+                    }
+                    
+                    showNotification(`Status pengaduan ${id} berhasil diubah menjadi "${newStatus}"`);
+                    
+                    // Reload data
+                    loadStatusData(currentUser);
+                    renderTable();
+                }
+            }
+        } else {
+            // User hanya bisa lihat detail
+            const userPengaduan = JSON.parse(localStorage.getItem(`eLapFaPengaduan_${currentUser.username}`) || '[]');
+            const pengaduan = userPengaduan.find(p => p.id === id);
+            
+            if (pengaduan) {
+                alert(`Detail Pengaduan:\n\nID: ${pengaduan.id}\nJenis: ${pengaduan.jenisPengaduan}\nDeskripsi: ${pengaduan.deskripsi}\nTanggal: ${new Date(pengaduan.tanggal).toLocaleDateString('id-ID')}\nStatus: ${pengaduan.status}`);
+            }
+        }
+    }
+
+    function renderPagination() {
+        const pagination = document.getElementById('pagination');
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+        
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+        
+        let paginationHTML = '';
+        
+        // Previous button
+        paginationHTML += `
+            <button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">
+                ‹
+            </button>
+        `;
+        
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                paginationHTML += `
+                    <button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">
+                        ${i}
+                    </button>
+                `;
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                paginationHTML += `<span class="pagination-btn" disabled>...</span>`;
+            }
+        }
+        
+        // Next button
+        paginationHTML += `
+            <button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">
+                ›
+            </button>
+        `;
+        
+        pagination.innerHTML = paginationHTML;
+    }
+
+    function changePage(page) {
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+        if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            renderTable();
+        }
+    }
+
+    function filterTable() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+        
+        // Get original data
+        loadStatusData(currentUser);
+        
+        filteredData = filteredData.filter(item => {
+            const matchesSearch = 
+                item.nama.toLowerCase().includes(searchTerm) ||
+                item.nim.toLowerCase().includes(searchTerm) ||
+                item.pengaduan.toLowerCase().includes(searchTerm);
+            
+            const matchesStatus = !statusFilter || item.status === statusFilter;
+            
+            return matchesSearch && matchesStatus;
+        });
+        
+        currentPage = 1;
+        renderTable();
+    }
+
+    // Menu interactions
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', function() {
+            if (!this.classList.contains('active')) {
+                const menuText = this.querySelector('span:last-child').textContent;
+                showNotification(`Navigasi ke ${menuText}...`);
+            }
+        });
+    });
+
+    window.addEventListener('load', initializePage);
+</script>
+
+<style>
+    .filter-section {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        align-items: center;
+    }
+
+    .filter-input {
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 200px;
+    }
+
+    .filter-select {
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .status-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+    }
+
+    .status-table th, .status-table td {
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+
+    .status-table th {
+        background-color: #f5f5f5;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+
+    .status-completed {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .status-progress {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    .pagination-btn {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ddd;
+        background-color: white;
+        color: #333;
+        cursor: pointer;
+        margin: 0 0.25rem;
+        border-radius: 4px;
+    }
+
+    .pagination-btn:hover {
+        background-color: #f5f5f5;
+    }
+
+    .pagination-btn.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+
+    .empty-state .icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .status-container, .admin-status-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .refresh-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .refresh-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: transform 0.2s ease;
+    }
+
+    .refresh-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .last-update {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .user-stats, .admin-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .status-item {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #e9ecef;
+    }
+
+    .status-item.menunggu-review {
+        border-left-color: #ffc107;
+    }
+
+    .status-item.diproses {
+        border-left-color: #007bff;
+    }
+
+    .status-item.selesai {
+        border-left-color: #28a745;
+    }
+
+    .status-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .status-id {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .status-date {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+
+    .status-menunggu-review {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-diproses {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-selesai {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-content h4 {
+        margin: 0 0 0.5rem 0;
+        color: #2c3e50;
+    }
+
+    .status-description {
+        color: #495057;
+        line-height: 1.5;
+        margin-bottom: 1.5rem;
+    }
+
+    .status-progress {
+        margin-top: 1.5rem;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+
+    .progress-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+
+    .progress-pending {
+        background: #ffc107;
+    }
+
+    .progress-processing {
+        background: #007bff;
+    }
+
+    .progress-completed {
+        background: #28a745;
+    }
+
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .step {
+        text-align: center;
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+    }
+
+    .step.active {
+        opacity: 1;
+    }
+
+    .step-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .step-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+
+    .no-data-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .no-data-text {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+    }
+
+    .create-pengaduan-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: transform 0.2s ease;
+    }
+
+    .create-pengaduan-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .action-btn {
+        background: white;
+        border: 2px solid #667eea;
+        color: #667eea;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .recent-activity {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .recent-activity h3 {
+        margin: 0 0 1.5rem 0;
+        color: #2c3e50;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .activity-icon.menunggu-review {
+        background: #fff3cd;
+    }
+
+    .activity-icon.diproses {
+        background: #d1ecf1;
+    }
+
+    .activity-icon.selesai {
+        background: #d4edda;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .activity-status {
+        font-weight: 500;
+        color: #667eea;
+    }
+
+    .no-activity {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+        .refresh-section {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .status-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .quick-actions {
+            flex-direction: column;
+        }
+        
+        .activity-meta {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+    }
+</style>
+</body>
+</html>
