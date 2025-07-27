@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-LapFa - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            background: linear-gradient(135deg, #374151 0%, #616775 50%, #c2cada 100%);
+        }
+
+        .background-icons {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.3;
+        }
+
+        .icon {
+            position: absolute;
+            font-size: 48px;
+            color: #4ade80;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .icon:nth-child(even) {
+            animation-delay: -3s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .icon-1 { top: 10%; left: 8%; animation-duration: 7s; }
+        .icon-2 { top: 15%; left: 85%; animation-duration: 5s; }
+        .icon-3 { top: 25%; left: 15%; animation-duration: 8s; }
+        .icon-4 { top: 30%; left: 75%; animation-duration: 6s; }
+        .icon-5 { top: 45%; left: 5%; animation-duration: 7s; }
+        .icon-6 { top: 50%; left: 90%; animation-duration: 5s; }
+        .icon-7 { top: 65%; left: 12%; animation-duration: 6s; }
+        .icon-8 { top: 70%; left: 80%; animation-duration: 8s; }
+        .icon-9 { top: 80%; left: 25%; animation-duration: 7s; }
+        .icon-10 { top: 85%; left: 70%; animation-duration: 5s; }
+        .icon{
+            font-size: 100px;
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 10;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(255, 253, 253, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgb(0, 0, 0);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo h1 {
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo .highlight {
+            color: #4ade80;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            z-index: 2;
+            color: #86efac;
+            font-size: 20px;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 56px;
+            padding: 0 16px 0 50px;
+            background: rgba(34, 197, 94, 0.8);
+            border: 2px solid #15803d;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-input::placeholder {
+            color: rgba(134, 239, 172, 0.9);
+            font-weight: 500;
+            letter-spacing: 0.1em;
+        }
+
+        .form-input:focus {
+            background: rgba(34, 197, 94, 0.9);
+            border-color: #4ade80;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.3);
+        }
+
+        .login-button {
+            width: 100%;
+            height: 48px;
+            background: #16a34a;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 24px;
+        }
+
+        .login-button:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+        }
+
+        .login-button:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 24px;
+        }
+
+        .forgot-password a {
+            color: #86efac;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            color: #4ade80;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .icon {
+                font-size: 36px;
+            }
+            
+            .logo h1 {
+                font-size: 36px;
+            }
+            
+            .login-form {
+                max-width: 320px;
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-icons">
+        <div class="icon icon-1">🔧</div>
+        <div class="icon icon-2">🔨</div>
+        <div class="icon icon-3">🪚</div>
+        <div class="icon icon-4">📐</div>
+        <div class="icon icon-5">🪑</div>
+        <div class="icon icon-6">🛏️</div>
+        <div class="icon icon-7">🛋️</div>
+        <div class="icon icon-8">💻</div>
+        <div class="icon icon-9">📱</div>
+        <div class="icon icon-10">🖥️</div>
+    </div>
+
+    <div class="login-container">
+        <div class="login-form">
+            <div class="logo">
+                <h1>e-<span class="highlight">LapFa</span></h1>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <div class="input-container">
+                        <div class="input-icon">👤</div>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            class="form-input" 
+                            placeholder="USERNAME" 
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="input-container">
+                        <div class="input-icon">🔑</div>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="form-input" 
+                            placeholder="PASSWORD" 
+                            required
+                        >
+                    </div>
+                </div>
+
+                <button type="submit" class="login-button" id="loginBtn">
+                    LOGIN
+                </button>
+            </form>
+
+            <div class="forgot-password">
+                <a href="#" onclick="handleForgotPassword()">Lupa Password?</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const validUsers = [
+            { username: 'nabhan', password: '123456', fullName: 'Nabhan' },
+            { username: 'admin', password: 'admin123', fullName: 'Administrator' },
+            { username: 'user', password: 'password', fullName: 'User' }
+        ];
+
+        function showMessage(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'block';
+            
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value.toLowerCase().trim();
+            const password = document.getElementById('password').value;
+            const button = document.getElementById('loginBtn');
+            
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            
+            if (!username || !password) {
+                showMessage('errorMessage', 'Username dan password harus diisi!');
+                return;
+            }
+            
+            button.textContent = 'LOGGING IN...';
+            button.disabled = true;
+            
+            setTimeout(() => {
+                const validUser = validUsers.find(user => 
+                    user.username === username && user.password === password
+                );
+                
+                if (validUser) {
+                    const userData = {
+                        username: validUser.username,
+                        fullName: validUser.fullName,
+                        loginTime: new Date().toISOString()
+                    };
+                    
+                    localStorage.setItem('eLapFaUser', JSON.stringify(userData));
+                    showMessage('successMessage', 'Login berhasil! Mengalihkan ke dashboard...');
+                    
+                    setTimeout(() => {
+                        window.location.href = './beranda.html';
+                    }, 1500);
+                    
+                } else {
+                    showMessage('errorMessage', 'Username atau password salah!');
+                    button.textContent = 'LOGIN';
+                    button.disabled = false;
+                }
+            }, 1000);
+        }
+
+        function handleForgotPassword() {
+            alert('Silakan hubungi administrator untuk reset password.');
+        }
+
+        window.addEventListener('load', function() {
+            const userData = localStorage.getItem('eLapFaUser');
+            if (userData) {
+                showMessage('successMessage', 'Sudah login, mengalihkan ke dashboard...');
+                setTimeout(() => {
+                    window.location.href = './beranda.html';
+                }, 1000);
+            }
+        });
+
+        const inputs = document.querySelectorAll('.form-input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
+

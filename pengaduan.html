@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-LapFa - Pengaduan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 50%, #374151 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(107, 114, 128, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo .highlight {
+            color: #4ade80;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.8);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 1);
+            transform: translateY(-1px);
+        }
+
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: rgba(156, 163, 175, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            color: #374151;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: #4ade80;
+            color: white;
+            box-shadow: 0 2px 10px rgba(74, 222, 128, 0.3);
+        }
+
+        .menu-icon {
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .page-header {
+            background: rgba(156, 163, 175, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-header h1 {
+            color: #374151;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .page-header .icon {
+            font-size: 28px;
+            color: #4ade80;
+        }
+
+        .form-container {
+            background: rgba(209, 213, 219, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            color: #374151;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4ade80;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #4ade80;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #4ade80;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+        }
+
+        .file-upload-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-label {
+            display: block;
+            padding: 12px 15px;
+            background: #f3f4f6;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-label:hover {
+            background: #e5e7eb;
+            border-color: #4ade80;
+            color: #374151;
+        }
+
+        .file-label.has-file {
+            background: #dcfce7;
+            border-color: #4ade80;
+            color: #166534;
+        }
+
+        .submit-btn {
+            background: #4ade80;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            float: right;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            background: #22c55e;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(34, 197, 94, 0.95);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: rgba(239, 68, 68, 0.95);
+        }
+
+        .required {
+            color: #ef4444;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: auto;
+                margin: 10px;
+                padding: 15px;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+
+            .submit-btn {
+                width: 100%;
+                float: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="notification" class="notification"></div>
+
+    <header class="header">
+        <div class="logo">e-<span class="highlight">LapFa</span></div>
+        <div class="user-section">
+            <div class="user-info">
+                <span>👤</span>
+                <span id="currentUsername">Loading...</span>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()">
+                <span>🚪</span>
+                Logout
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <nav class="sidebar">
+            <div class="menu-item" onclick="navigateTo('./beranda.html')">
+                <span class="menu-icon">🏠</span>
+                <span>Beranda</span>
+            </div>
+            <div class="menu-item active">
+                <span class="menu-icon">📝</span>
+                <span>Pengaduan</span>
+            </div>
+            <div class="menu-item">
+                <span class="menu-icon">📊</span>
+                <span>Status</span>
+            </div>
+            <div class="menu-item">
+                <span class="menu-icon">👥</span>
+                <span>Data Penguna</span>
+            </div>
+            <div class="menu-item">
+                <span class="menu-icon">👤</span>
+                <span>Profile</span>
+            </div>
+            <div class="menu-item">
+                <span class="menu-icon">🔑</span>
+                <span>Ubah Password</span>
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <div class="page-header">
+                <span class="icon">📝</span>
+                <h1>Pengaduan</h1>
+            </div>
+
+            <div class="form-container">
+                <form id="pengaduanForm" onsubmit="handleSubmit(event)">
+                    <!-- Nama -->
+                    <div class="form-group">
+                        <label class="form-label" for="nama">
+                            Nama <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="nama" 
+                            name="nama" 
+                            class="form-input" 
+                            required
+                            placeholder="Masukkan nama lengkap"
+                        >
+                    </div>
+
+                    <!-- Jenis Pengaduan -->
+                    <div class="form-group">
+                        <label class="form-label" for="jenisPengaduan">
+                            Jenis Pengaduan <span class="required">*</span>
+                        </label>
+                        <select id="jenisPengaduan" name="jenisPengaduan" class="form-select" required>
+                            <option value="">Pilih Jenis Pengaduan</option>
+                            <option value="Pengaduan Pelayanan Yang Di Tuju">Pengaduan Pelayanan Yang Di Tuju</option>
+                            <option value="Pengaduan Fasilitas">Pengaduan Fasilitas</option>
+                            <option value="Pengaduan Pelayanan Publik">Pengaduan Pelayanan Publik</option>
+                            <option value="Pengaduan Infrastruktur">Pengaduan Infrastruktur</option>
+                            <option value="Pengaduan Lainnya">Pengaduan Lainnya</option>
+                        </select>
+                    </div>
+
+                    <!-- Deskripsi -->
+                    <div class="form-group">
+                        <label class="form-label" for="deskripsi">
+                            Deskripsi <span class="required">*</span>
+                        </label>
+                        <textarea 
+                            id="deskripsi" 
+                            name="deskripsi" 
+                            class="form-textarea" 
+                            required
+                            placeholder="Jelaskan detail pengaduan Anda..."
+                        ></textarea>
+                    </div>
+
+                    <!-- Bukti Foto -->
+                    <div class="form-group">
+                        <label class="form-label">Bukti Foto</label>
+                        <div class="file-upload-group">
+                            <div class="file-upload">
+                                <input type="file" id="foto1" name="foto1" class="file-input" accept="image/*" onchange="updateFileLabel(this)">
+                                <label for="foto1" class="file-label">Choose File</label>
+                            </div>
+                            <div class="file-upload">
+                                <input type="file" id="foto2" name="foto2" class="file-input" accept="image/*" onchange="updateFileLabel(this)">
+                                <label for="foto2" class="file-label">Choose File</label>
+                            </div>
+                            <div class="file-upload">
+                                <input type="file" id="foto3" name="foto3" class="file-input" accept="image/*" onchange="updateFileLabel(this)">
+                                <label for="foto3" class="file-label">Choose File</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bukti Video -->
+                    <div class="form-group">
+                        <label class="form-label">Bukti Video</label>
+                        <div class="file-upload">
+                            <input type="file" id="video" name="video" class="file-input" accept="video/*" onchange="updateFileLabel(this)">
+                            <label for="video" class="file-label">Choose File</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        Simpan
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${isError ? 'error' : ''} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function checkAuth() {
+            const userData = localStorage.getItem('eLapFaUser');
+            if (!userData) {
+                showNotification('Sesi tidak ditemukan, silakan login kembali', true);
+                setTimeout(() => {
+                    window.location.href = './index.html';
+                }, 2000);
+                return null;
+            }
+
+            try {
+                return JSON.parse(userData);
+            } catch (e) {
+                localStorage.removeItem('eLapFaUser');
+                showNotification('Data tidak valid, silakan login kembali', true);
+                setTimeout(() => {
+                    window.location.href = './index.html';
+                }, 2000);
+                return null;
+            }
+        }
+
+        function initializePage() {
+            const user = checkAuth();
+            if (user) {
+                const displayName = user.fullName || user.username;
+                document.getElementById('currentUsername').textContent = displayName;
+                
+                // Auto-fill nama field with user's name
+                document.getElementById('nama').value = displayName;
+                
+                showNotification('Halaman pengaduan siap digunakan');
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                localStorage.removeItem('eLapFaUser');
+                showNotification('Logout berhasil!');
+                
+                setTimeout(() => {
+                    window.location.href = './index.html';
+                }, 1500);
+            }
+        }
+
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+
+        function updateFileLabel(input) {
+            const label = input.nextElementSibling;
+            if (input.files && input.files[0]) {
+                const fileName = input.files[0].name;
+                label.textContent = fileName.length > 30 ? fileName.substring(0, 30) + '...' : fileName;
+                label.classList.add('has-file');
+            } else {
+                label.textContent = 'Choose File';
+                label.classList.remove('has-file');
+            }
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Validate required fields
+            const nama = formData.get('nama');
+            const jenisPengaduan = formData.get('jenisPengaduan');
+            const deskripsi = formData.get('deskripsi');
+            
+            if (!nama || !jenisPengaduan || !deskripsi) {
+                showNotification('Mohon lengkapi semua field yang wajib diisi', true);
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.textContent = 'Menyimpan...';
+            submitBtn.disabled = true;
+            
+            // Simulate form submission
+            setTimeout(() => {
+                // Get current user
+                const userData = JSON.parse(localStorage.getItem('eLapFaUser'));
+                
+                // Create pengaduan data
+                const pengaduanData = {
+                    id: 'PGD-' + Date.now(),
+                    nama: nama,
+                    jenisPengaduan: jenisPengaduan,
+                    deskripsi: deskripsi,
+                    tanggal: new Date().toISOString(),
+                    status: 'Menunggu Review',
+                    userId: userData.username
+                };
+                
+                // Save to localStorage (in real app, this would be sent to server)
+                let pengaduanList = JSON.parse(localStorage.getItem('pengaduanList') || '[]');
+                pengaduanList.push(pengaduanData);
+                localStorage.setItem('pengaduanList', JSON.stringify(pengaduanList));
+                
+                // Reset form
+                event.target.reset();
+                document.querySelectorAll('.file-label').forEach(label => {
+                    label.textContent = 'Choose File';
+                    label.classList.remove('has-file');
+                });
+                
+                // Auto-fill nama again
+                document.getElementById('nama').value = userData.fullName || userData.username;
+                
+                // Show success message
+                showNotification('Pengaduan berhasil disimpan dengan ID: ' + pengaduanData.id);
+                
+                // Reset button
+                submitBtn.textContent = 'Simpan';
+                submitBtn.disabled = false;
+                
+            }, 2000);
+        }
+
+        // Menu interactions
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                if (!this.classList.contains('active')) {
+                    const menuText = this.querySelector('span:last-child').textContent;
+                    showNotification(`Navigasi ke ${menuText}...`);
+                }
+            });
+        });
+
+        window.addEventListener('load', initializePage);
+    </script>
+</body>
+</html>
